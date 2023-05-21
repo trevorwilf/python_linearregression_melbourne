@@ -7,17 +7,28 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 import math
 
-# get the file and save it
-#url = 'https://www.kaggle.com/datasets/dansbecker/melbourne-housing-snapshot/download?datasetVersionNumber=5'
-#response = requests.get(url)
+## 
+# functions
+##
+def get_mae(max_leaf_nodes, train_x, val_x, train_y, val_y):
+    """this is desingned to be used in conjuction with a for loop to 
+        test for the optimal number of leaf_nodes to avoid over and under fitting.
 
-#if (not os.path.exists('./data')):
-#    os.makedirs('./data')
+    Args:
+        max_leaf_nodes (_type_): current leaf nodes for testing
+        train_x (_type_): training data set x
+        val_x (_type_): testing data set x
+        train_y (_type_): training data set y
+        val_y (_type_): testing data set y
+    """    
+    model = DecisionTreeRegressor(max_leaf_nodes=max_leaf_nodes, random_state=0)
+    model.fit(train_x, train_y)
+    preds_val = model.predict(val_x)
+    mae = mean_absolute_error(val_y, preds_val)
+    return(mae)
 
-#with open('out.csv', 'w') as f:
-#    writer = csv.writer(f)
-#    for line in response.iter_lines():
-#        writer.writerow(line.decode('utf-8').split(','))
+
+##
 
 melbourne_file_path = './data/melb_data.csv'
 
@@ -48,10 +59,23 @@ x_train.describe()
 x_train.head()
 x_train.columns
 
+# find max leaf nodes to prevent under and over fitting
+best_max_leag_nodes = 0
+best_mae = 1000000
+for max_leaf_node in list(range(5, 10000, 50)):
+    cur_mae = get_mae(max_leaf_node, x_train, x_test, y_train, y_test)
+    if cur_mae < best_mae:
+        best_max_leag_nodes = max_leaf_node
+        best_mae = cur_mae
+        
+    
+    print(f'current max leaf node: {max_leaf_node} \t\t mae: {cur_mae} \t\t best mae: {best_mae} \t\t best max leaf node: {best_max_leag_nodes}')
+        
+
 # build model
 #prices are what we want to predict
 
-melbourne_model = DecisionTreeRegressor(random_state=1)
+melbourne_model = DecisionTreeRegressor(max_leaf_nodes=best_max_leag_nodes, random_state=0)
 
 
 #fit the model
